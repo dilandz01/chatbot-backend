@@ -7,7 +7,7 @@ const OpenAI = require("openai");
 const app = express();
 const PORT = 3005;
 
-app.use(cors());
+app.use(cors({ origin: [process.env.CORS_URL] }));
 app.use(bodyParser.json());
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
