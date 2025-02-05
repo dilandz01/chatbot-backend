@@ -41,7 +41,7 @@ app.post("/chat", async (req, res) => {
     // Wait for completion
     let runStatus;
     do {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       runStatus = await openai.beta.threads.runs.retrieve(thread_id, run.id);
     } while (runStatus.status !== "completed");
 
@@ -60,5 +60,5 @@ app.post("/chat", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on ${PORT}`);
 });
