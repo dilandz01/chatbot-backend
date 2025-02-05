@@ -43,7 +43,7 @@ app.post("/chat", async (req, res) => {
       role: "user",
       content: message,
     });
-    console.log(`✅ User message sent successfully.`);
+    console.log(`User message sent successfully.`);
 
     // Run the Assistant
     console.log(` Starting Assistant processing...`);
