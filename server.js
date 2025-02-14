@@ -3,9 +3,10 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const OpenAI = require("openai");
+const serverless = require("serverless-http");
 
 const app = express();
-const PORT = 3005;
+// const PORT = 3005;
 
 app.use(
   cors({
@@ -18,7 +19,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Route to handle user messages
 app.post("/chat", async (req, res) => {
-  const { message, threadId } = req.body;
+  const { message, threadId, domain } = req.body;
   console.log(
     `New request received. Message: "${message}" | Thread ID: ${
       threadId || "New Thread"
@@ -27,6 +28,7 @@ app.post("/chat", async (req, res) => {
 
   try {
     let thread_id = threadId;
+    let assistant_id;
 
     // If no thread ID exists, create a new conversation
     if (!thread_id) {
@@ -45,18 +47,25 @@ app.post("/chat", async (req, res) => {
     });
     console.log(`User message sent successfully.`);
 
+
+    console.log("User request from domain: ", domain);
+    // Check which country site is request and assign ID 
+    if (domain.endsWith(".com.au")){
+      assistant_id = process.env.AU_ASSISTANT_ID
+    }else if (domain.endsWith(".co.nz") ){
+      assistant_id = process.env.NZ_ASSISTANT_ID
+    }else if(domain.endsWith(".ca")){
+      assistant_id = process.env.CA_ASSISTANT_ID
+    }else{
+      assistant_id = process.env.AU_ASSISTANT_ID
+    }
+
     // Run the Assistant
     console.log(` Starting Assistant processing...`);
     const run = await openai.beta.threads.runs.create(thread_id, {
-      assistant_id: process.env.ASSISTANT_ID,
+      assistant_id: assistant_id,
     });
 
-    // // Wait for completion
-    // let runStatus;
-    // do {
-    //   await new Promise((resolve) => setTimeout(resolve, 5000));
-    //   runStatus = await openai.beta.threads.runs.retrieve(thread_id, run.id);
-    // } while (runStatus.status !== "completed");
 
     // Poll for completion with a timeout
     const completed = await waitForCompletion(thread_id, run.id);
@@ -82,6 +91,8 @@ app.post("/chat", async (req, res) => {
     res.status(500).json({ error: "Failed to get response from Assistant" });
   }
 });
+
+
 
 //Exponential backoff function that waiting for assistant to complete it run searching data
 async function waitForCompletion(thread_id, run_id) {
@@ -121,6 +132,8 @@ async function waitForCompletion(thread_id, run_id) {
   return false;
 }
 
-app.listen(PORT, () => {
-  console.log(`Server running on ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server running on ${PORT}`);
+// });
+
+module.exports.handler = serverless(app);
